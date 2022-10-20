@@ -1,0 +1,108 @@
+.content {
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  padding: 4.375rem 1.875rem;
+  background-color: $color-white;
+}
+
+.game-canvas {
+  display: block;
+  width: 31.25rem;
+  height: 31.25rem;
+  border: 0.25rem solid $color-blue;
+  box-sizing: content-box;
+}
+
+.score-top {
+  display: flex;
+  justify-content: center;
+
+  span {
+    margin: 0 0.25rem;
+  }
+}
+
+.buttons-top, .buttons-bottom {
+  display: flex;
+  justify-content: space-between;
+  width: 31.25rem;
+  padding: 0.25rem 0;
+
+
+  button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    width: 16%;
+    height: 1.875rem;
+    padding: 0;
+    background-color: #fff;
+    border: 1px solid $color-blue;
+    color: $color-blue;
+    font-size: 0.9375rem;
+    cursor: pointer;
+
+    &.active {
+      background-color: $color-blue;
+      color: $color-white;
+    }
+  }
+}
+
+.buttons-top {
+
+  button {
+    width: 16%;
+  }
+}
+
+.buttons-bottom {
+
+  button {
+    width: 16%;
+  }
+}
+
+.modal-info {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0, 0.8);
+
+  &.active {
+    display: flex;
+  }
+}
+
+.modal-info__message {
+  width: 70%;
+  font-size: 1.25rem;
+  color: $color-white;
+  text-align: center;
+}
+
+.modal-info__button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+  width: 6.25rem;
+  height: 2.1875rem;
+  padding: 0;
+  background-color: transparent;
+  border: 1px solid $color-white;
+  color: $color-white;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
