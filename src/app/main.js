@@ -4,6 +4,7 @@ import { createMatrix, createRandomSet, createSet } from './modules/createMatrix
 import { coordinates } from './modules/coordinates';
 import { createLayout } from './modules/layout';
 import { audio } from './modules/audio';
+import gsap from 'gsap';
 
 require('./modules/roundRect');
 
@@ -37,17 +38,9 @@ buttonShuffle.addEventListener('click', () => {
   gameClear();
 })
 
-buttonPlay.addEventListener('click', () => {
-  isPlay = true;
-  buttonPlay.classList.add('active');
-  buttonPause.classList.remove('active');
-})
+buttonPlay.addEventListener('click', () => gamePlay())
 
-buttonPause.addEventListener('click', () => {
-  isPlay = false;
-  buttonPlay.classList.remove('active');
-  buttonPause.classList.add('active');
-})
+buttonPause.addEventListener('click', () => gamePause())
 
 button3x3.addEventListener('click', () => {
   size = 3;
@@ -129,11 +122,15 @@ function update() {
   arr.map((a, i) => {
     a.map((obj, j) => {
       if(obj.n !== 'free') {
-        if(arr[i][j] == exp[i][j]) component(ctx, size, j, i, obj, true);
-        else component(ctx, size, j, i, obj);
+        if(arr[i][j].n == exp[i][j].n) component(ctx, size, obj, true);
+        else component(ctx, size, obj);
       }
     })
   })
+  if(isPlay && deepEqual(arr, exp)) {
+    gamePause ();
+    showInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`)
+  }
   document.getElementById('gameScore').textContent = moves;
 }
 
@@ -167,57 +164,76 @@ function getCursorPosition(canvas, event) {
 canvas.addEventListener('click', function(e) {
   if(canClick) {
     canClick = false;
-    if(isPlay) {
-      const {mouseX, mouseY} = getCursorPosition(canvas, e);
-      console.log(mouseX, mouseY);
-      arr.map((a, i) => {
-        a.map((obj, j) => {
-          const { xStart, yStart, xEnd, yEnd} = coordinates(size, j, i);
-          if(mouseX > xStart && mouseX < xEnd && mouseY > yStart && mouseY < yEnd) {
+    const {mouseX, mouseY} = getCursorPosition(canvas, e);
+    console.log(mouseX, mouseY);
+    arr.map((a, i) => {
+      a.map((obj, j) => {
+        const { xStart, yStart, xEnd, yEnd} = coordinates(size, j, i);
+        if(mouseX > xStart && mouseX < xEnd && mouseY > yStart && mouseY < yEnd) {
 
-
-
-            // MOVE UP
-            if(arr[i - 1] && arr[i - 1][j].n == 'free') {
+          // MOVE UP
+          if(arr[i - 1] && arr[i - 1][j] && arr[i - 1][j].n == 'free') {
+            const numberY = arr[i][j].y;
+            const freeY = arr[i - 1][j].y;
+            gsap.to(arr[i][j], {y: freeY, duration: 0.3}).then(() => {
               arr[i - 1][j].n = obj.n;
               arr[i][j].n = 'free';
-              moves += 1;
-              sound.play();
-            }
+              arr[i][j].y = numberY;
+            })
+            moves += 1;
+            gamePlay();
+            sound.play();
+          }
 
-            // MOVE DOWN
-            if(arr[i + 1] && arr[i + 1][j].n == 'free') {
+          // // MOVE DOWN
+          if(arr[i + 1] && arr[i + 1][j] && arr[i + 1][j].n == 'free') {
+            const numberY = arr[i][j].y;
+            const freeY = arr[i + 1][j].y;
+            gsap.to(arr[i][j], {y: freeY, duration: 0.3}).then(() => {
               arr[i + 1][j].n = obj.n;
               arr[i][j].n = 'free';
-              moves += 1;
-              sound.play();
-            }
-
-            // MOVE LEFT
-            if(a[j - 1] && a[j - 1].n == 'free') {
-              a[j - 1].n = obj.n;
-              a[j].n = 'free';
-              moves += 1;
-              sound.play();
-            }
-
-            // MOVE RIGHT
-            if(a[j + 1] && a[j + 1].n == 'free') {
-              a[j + 1].n = obj.n;
-              a[j].n = 'free';
-              moves += 1;
-              sound.play();
-            }
-
-            console.log(arr);
+              arr[i][j].y = numberY;
+            })
+            moves += 1;
+            isPlay = true;
+            gamePlay();
+            sound.play();
           }
-        })
+
+          // MOVE LEFT
+          if(arr[i][j - 1] && arr[i][j - 1].n == 'free') {
+            const numberX = arr[i][j].x;
+            const freeX = arr[i][j - 1].x;
+            gsap.to(arr[i][j], {x: freeX, duration: 0.3}).then(() => {
+              arr[i][j - 1].n = obj.n;
+              arr[i][j].n = 'free';
+              arr[i][j].x = numberX;
+            })
+            moves += 1;
+            isPlay = true;
+            gamePlay();
+            sound.play();
+          }
+
+          // // MOVE RIGHT
+          if(arr[i][j + 1] && arr[i][j + 1].n == 'free') {
+            const numberX = arr[i][j].x;
+            const freeX = arr[i][j + 1].x;
+            gsap.to(arr[i][j], {x: freeX, duration: 0.3}).then(() => {
+              arr[i][j + 1].n = obj.n;
+              arr[i][j].n = 'free';
+              arr[i][j].x = numberX;
+            })
+            moves += 1;
+            isPlay = true;
+            gamePlay();
+            sound.play();
+          }
+        }
       })
-    } else {
-      showInfo('Please click "PLAY" button');
-    }
+    })
   }
-  setTimeout(() => canClick = true, 200)
+  setTimeout(() => canClick = true, 300)
 })
 
 // HELPERS
@@ -233,6 +249,30 @@ function gameClear () {
   blockTimer.textContent = '00:00:00';
   buttonPlay.classList.remove('active');
   buttonPause.classList.add('active');
+}
+
+function gamePlay () {
+  isPlay = true;
+  buttonPlay.classList.add('active');
+  buttonPause.classList.remove('active');
+}
+
+function gamePause () {
+  isPlay = false;
+  buttonPlay.classList.remove('active');
+  buttonPause.classList.add('active');
+}
+
+function deepEqual (arr1, arr2) {
+  let isEqueal = true;
+  arr1.forEach((arr, i) => {
+    arr.forEach((obj, j) => {
+      if(obj.n !== arr2[i][j].n) isEqueal = false;
+      if(obj.x !== arr2[i][j].x) isEqueal = false;
+      if(obj.y !== arr2[i][j].y) isEqueal = false;
+    })
+  })
+  return isEqueal
 }
 
 document.querySelector('.modal-info__button').addEventListener('click', () => {
