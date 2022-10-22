@@ -18,6 +18,7 @@ let timer = 0;
 let isPlay = false;
 let canClick = true;
 let balls = -1;
+let saveStep = false;
 
 const blockTimer = document.getElementById('gameTimer');
 const canvas = document.getElementById('canvas');
@@ -45,8 +46,14 @@ buttonPause.addEventListener('click', (e) => {
 })
 
 buttonSave.addEventListener('click', (e) => {
-  if(e.target.classList.contains('active')) unsaveCurrentPosition();
-  else saveCurrentPosition()
+  if(e.target.classList.contains('active')) {
+    unsaveCurrentPosition();
+    saveStep = false;
+  }
+  else {
+    saveCurrentPosition();
+    saveStep = true;
+  }
 });
 
 buttonResults.addEventListener('click', () => showResult())
@@ -132,7 +139,11 @@ if(savedData &&
   size = savedData.size;
   moves = savedData.moves;
   timer = savedData.timer;
+  blockTimer.textContent = timerToHMS(timer);
   buttonSave.classList.add('active');
+  document.querySelector('.buttons-bottom .active').classList.remove('active');
+  document.getElementById(`gameSize${size}`).classList.add('active');
+  saveStep = true;
   console.log('GET SAVED SET');
   // console.log(arr);
   // console.log(exp);
@@ -162,6 +173,9 @@ function update() {
     showInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`)
     gameShuffle();
   }
+  if(saveStep) {
+    saveCurrentPosition();
+  }
   document.getElementById('gameScore').textContent = moves;
 }
 
@@ -170,10 +184,7 @@ setInterval(update, 20);
 setInterval(() => {
   if(isPlay) {
     timer += 1;
-    const h = `${Math.floor(timer / 3600)}`.padStart(2, '0');
-    const m = `${Math.floor((timer % 3600) / 60)}`.padStart(2, '0');
-    const s = `${Math.floor((timer % 3600) % 60)}`.padStart(2, '0');
-    blockTimer.textContent = `${h}:${m}:${s}`;
+    blockTimer.textContent = timerToHMS(timer);
   }
 }, 1000)
 
@@ -194,21 +205,6 @@ canvas.addEventListener('click', function(e) {
       a.forEach((obj, j) => {
         const { xStart, yStart, xEnd, yEnd} = coordinates(size, j, i);
         if(mouseX > xStart && mouseX < xEnd && mouseY > yStart && mouseY < yEnd) {
-
-          const animate = (from, to) => {
-            let position = 0;
-            let step = (to - from) / 15;
-            const animStep = () => {
-              position += step;
-              arr[i][j].y = from + position;
-              if(arr[i][j].y < to) {
-                arr[i][j].y = to;
-              } else {
-                setTimeout(() => animStep(), 20)
-              }
-            }
-            animStep()
-          }
 
           // MOVE UP
           if(arr[i - 1] && arr[i - 1][j] && arr[i - 1][j].n == 'free') {
@@ -365,7 +361,7 @@ function saveCurrentPosition() {
     'moves': moves,
     'timer': timer
   }
-  console.log('saveCurrentPosition', data)
+  // console.log('saveCurrentPosition', data)
   localStorage.setItem('gameSave', JSON.stringify(data));
 }
 
@@ -413,15 +409,25 @@ function showResult() {
       <span>Moves</span>
       <span>Timer</span>
     </li>
-    ${data.map((row) => `
-      <li>
-        <span>${row.date}</span>
-        <span>${row.time}</span>
-        <span>${row.size}</span>
-        <span>${row.moves}</span>
-        <span>${row.timer}</span>
-      </li>
-    `).join('')}`
+    ${data.map((row) => {
+      if(typeof(row.timer) == 'number') row.timer = timerToHMS(row.timer)
+      return `
+        <li>
+          <span>${row.date}</span>
+          <span>${row.time}</span>
+          <span>${row.size}</span>
+          <span>${row.moves}</span>
+          <span>${row.timer}</span>
+        </li>
+      `
+    }).join('')}`
+}
+
+function timerToHMS(timer) {
+  const h = `${Math.floor(timer / 3600)}`.padStart(2, '0');
+  const m = `${Math.floor((timer % 3600) / 60)}`.padStart(2, '0');
+  const s = `${Math.floor((timer % 3600) % 60)}`.padStart(2, '0');
+  return `${h}:${m}:${s}`;
 }
 
 document.querySelector('.modal-info__button').addEventListener('click', () => {
