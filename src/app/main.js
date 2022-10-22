@@ -4,6 +4,7 @@ import { createMatrix, createRandomSet, createSet } from './modules/createMatrix
 import { coordinates } from './modules/coordinates';
 import { createLayout } from './modules/layout';
 import { audio } from './modules/audio';
+import { resultData } from './modules/data';
 import gsap from 'gsap';
 
 require('./modules/roundRect');
@@ -17,12 +18,15 @@ let moves = 0;
 let timer = 0;
 let isPlay = false;
 let canClick = true;
+let balls = -1;
 
 const blockTimer = document.getElementById('gameTimer');
 const canvas = document.getElementById('canvas');
 const buttonShuffle = document.getElementById('gameShuffle');
 const buttonPlay = document.getElementById('gamePlay');
 const buttonPause = document.getElementById('gamePause');
+const buttonSave = document.getElementById('gameSave');
+const buttonResults = document.getElementById('gameResults');
 const button3x3 = document.getElementById('gameSize3');
 const button4x4 = document.getElementById('gameSize4');
 const button5x5 = document.getElementById('gameSize5');
@@ -32,15 +36,15 @@ const button8x8 = document.getElementById('gameSize8');
 const soundButton = document.getElementById('gameSound');
 const sound = audio();
 
-buttonShuffle.addEventListener('click', () => {
-  arr = createMatrix(size, createRandomSet);
-  exp = createMatrix(size, createSet);
-  gameClear();
-})
+buttonShuffle.addEventListener('click', () => gameShuffle())
 
 buttonPlay.addEventListener('click', () => gamePlay())
 
 buttonPause.addEventListener('click', () => gamePause())
+
+// buttonSave.addEventListener('click', () => saveResult())
+
+buttonResults.addEventListener('click', () => showResult())
 
 button3x3.addEventListener('click', () => {
   size = 3;
@@ -129,7 +133,9 @@ function update() {
   })
   if(isPlay && deepEqual(arr, exp)) {
     gamePause ();
+    saveResult();
     showInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`)
+    gameShuffle();
   }
   document.getElementById('gameScore').textContent = moves;
 }
@@ -238,11 +244,17 @@ canvas.addEventListener('click', function(e) {
 
 // HELPERS
 function showInfo(message) {
-  document.querySelector('.modal-info__message').textContent = message;
+  document.querySelector('.modal-info__title').textContent = message;
   document.querySelector('.modal-info').classList.add('active');
 }
 
-function gameClear () {
+function gameShuffle() {
+  arr = createMatrix(size, createRandomSet);
+  exp = createMatrix(size, createSet);
+  gameClear();
+}
+
+function gameClear() {
   isPlay = false;
   moves = 0;
   timer = 0;
@@ -251,13 +263,13 @@ function gameClear () {
   buttonPause.classList.add('active');
 }
 
-function gamePlay () {
+function gamePlay() {
   isPlay = true;
   buttonPlay.classList.add('active');
   buttonPause.classList.remove('active');
 }
 
-function gamePause () {
+function gamePause() {
   isPlay = false;
   buttonPlay.classList.remove('active');
   buttonPause.classList.add('active');
@@ -275,9 +287,53 @@ function deepEqual (arr1, arr2) {
   return isEqueal
 }
 
+function showResult() {
+
+  const data = JSON.parse(localStorage.getItem('results')) || resultData;
+  console.log(data)
+
+  //
+  document.querySelector('.modal-results').classList.add('active');
+  document.querySelector('.modal-result__table').innerHTML =
+    `
+    <li><span>Date</span><span>Time</span><span>Size</span><span>Moves</span><span>Timer</span></li>
+    ${data.map((row) => `<li><span>${row.date}</span><span>${row.time}</span><span>${row.size}</span><span>${row.moves}</span><span>${row.timer}</span></li>`).join('')}`
+}
+
+function saveResult() {
+  let data = JSON.parse(localStorage.getItem('results')) || resultData;
+  if(moves > 0 && timer > 0) balls = (size * size) / (moves * timer);
+  else balls = -1;
+  const date = new Date();
+  const yy = date.getFullYear();
+  const mm = `${date.getMonth() + 1}`.padStart(2, '0');
+  const dd = `${date.getDate()}`.padStart(2, '0');
+  const h = `${date.getHours()}`.padStart(2, '0');
+  const m = `${date.getMinutes()}`.padStart(2, '0');
+  const s = `${date.getSeconds()}`.padStart(2, '0');
+  data.push({
+    date: dd + '.' + mm + '.' + yy,
+    time: h + ':' + m + ':' + s,
+    size: size + 'x' + size,
+    moves: moves,
+    timer: timer,
+    balls: balls
+  },)
+  data.sort((a, b) =>  b.balls - a.balls)
+  console.log(data)
+  data = data.slice(0, 10);
+  console.log(data)
+  localStorage.setItem('results', JSON.stringify(data))
+}
+
 document.querySelector('.modal-info__button').addEventListener('click', () => {
   document.querySelector('.modal-info').classList.remove('active');
 })
+
+document.querySelector('.modal-results__button').addEventListener('click', () => {
+  document.querySelector('.modal-results').classList.remove('active');
+})
+
 
 
 

@@ -41,12 +41,22 @@ export const createLayout = () => {
   `
   document.querySelector('.content').append(btnBottom);
 
-  // ADD MODAL
-  const modal = document.createElement('div');
-  modal.className = "modal-info";
-  modal.innerHTML = `
-    <div class="modal-info__message">xxxxxxx</div>
-    <button class="modal-info__button">OK</button>
+  // ADD MODAL INFO
+  const modalInfo = document.createElement('div');
+  modalInfo.className = "modal modal-info";
+  modalInfo.innerHTML = `
+    <div class="modal__title modal-info__title"></div>
+    <button class="modal__button modal-info__button">Close</button>
   `
-  document.querySelector('.content').append(modal);
+  document.querySelector('.content').append(modalInfo);
+
+  // ADD MODAL RESULT
+  const modalResult = document.createElement('div');
+  modalResult.className = "modal modal-results";
+  modalResult.innerHTML = `
+    <div class="modal__title">Top 10 results</div>
+    <ul class="modal__table modal-result__table"></ul>
+    <button class="modal__button modal-results__button">Close</button>
+  `
+  document.querySelector('.content').append(modalResult);
 }
