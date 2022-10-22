@@ -5,7 +5,6 @@ import { coordinates } from './modules/coordinates';
 import { createLayout } from './modules/layout';
 import { audio } from './modules/audio';
 import { resultData } from './modules/data';
-import gsap from 'gsap';
 
 require('./modules/roundRect');
 
@@ -13,7 +12,7 @@ createLayout();
 
 let arr = [];
 let exp = [];
-let size = 3;
+let size = 4;
 let moves = 0;
 let timer = 0;
 let isPlay = false;
@@ -22,7 +21,6 @@ let balls = -1;
 
 const blockTimer = document.getElementById('gameTimer');
 const canvas = document.getElementById('canvas');
-const buttonShuffle = document.getElementById('gameShuffle');
 const buttonPlay = document.getElementById('gamePlay');
 const buttonPause = document.getElementById('gamePause');
 const buttonSave = document.getElementById('gameSave');
@@ -36,13 +34,20 @@ const button8x8 = document.getElementById('gameSize8');
 const soundButton = document.getElementById('gameSound');
 const sound = audio();
 
-buttonShuffle.addEventListener('click', () => gameShuffle())
+buttonPlay.addEventListener('click', () => {
+  gameShuffle();
+  gamePlay()
+})
 
-buttonPlay.addEventListener('click', () => gamePlay())
+buttonPause.addEventListener('click', (e) => {
+  if(e.target.classList.contains('active')) gamePlay();
+  else gamePause();
+})
 
-buttonPause.addEventListener('click', () => gamePause())
-
-// buttonSave.addEventListener('click', () => saveResult())
+buttonSave.addEventListener('click', (e) => {
+  if(e.target.classList.contains('active')) unsaveCurrentPosition();
+  else saveCurrentPosition()
+});
 
 buttonResults.addEventListener('click', () => showResult())
 
@@ -112,12 +117,32 @@ soundButton.addEventListener('click', () => {
   }
 })
 
-// CREATE ARRAY
-arr = createMatrix(size, createRandomSet);
-exp = createMatrix(size, createSet);
+const savedData = JSON.parse(localStorage.getItem('gameSave'));
+console.log('savedData', savedData);
 
-console.log(arr);
-console.log(exp);
+if(savedData &&
+  savedData.arr &&
+  savedData.exp &&
+  savedData.size &&
+  savedData.moves >= 0 &&
+  savedData.timer >= 0
+) {
+  arr = savedData.arr;
+  exp = savedData.exp;
+  size = savedData.size;
+  moves = savedData.moves;
+  timer = savedData.timer;
+  buttonSave.classList.add('active');
+  console.log('GET SAVED SET');
+  // console.log(arr);
+  // console.log(exp);
+} else {
+  arr = createMatrix(size, createRandomSet);
+  exp = createMatrix(size, createSet);
+  console.log('CREATE NEW SET');
+  // console.log(arr);
+  // console.log(exp);
+}
 
 const ctx = canvas.getContext('2d');
 
@@ -149,13 +174,6 @@ setInterval(() => {
     const m = `${Math.floor((timer % 3600) / 60)}`.padStart(2, '0');
     const s = `${Math.floor((timer % 3600) % 60)}`.padStart(2, '0');
     blockTimer.textContent = `${h}:${m}:${s}`;
-    // START PAUSE BUTTONS
-    buttonPlay.classList.add('active');
-    buttonPause.classList.remove('active');
-    // console.log(timer)
-  } else {
-    buttonPlay.classList.remove('active');
-    buttonPause.classList.add('active');
   }
 }, 1000)
 
@@ -172,20 +190,44 @@ canvas.addEventListener('click', function(e) {
     canClick = false;
     const {mouseX, mouseY} = getCursorPosition(canvas, e);
     console.log(mouseX, mouseY);
-    arr.map((a, i) => {
-      a.map((obj, j) => {
+    arr.forEach((a, i) => {
+      a.forEach((obj, j) => {
         const { xStart, yStart, xEnd, yEnd} = coordinates(size, j, i);
         if(mouseX > xStart && mouseX < xEnd && mouseY > yStart && mouseY < yEnd) {
 
+          const animate = (from, to) => {
+            let position = 0;
+            let step = (to - from) / 15;
+            const animStep = () => {
+              position += step;
+              arr[i][j].y = from + position;
+              if(arr[i][j].y < to) {
+                arr[i][j].y = to;
+              } else {
+                setTimeout(() => animStep(), 20)
+              }
+            }
+            animStep()
+          }
+
           // MOVE UP
           if(arr[i - 1] && arr[i - 1][j] && arr[i - 1][j].n == 'free') {
-            const numberY = arr[i][j].y;
-            const freeY = arr[i - 1][j].y;
-            gsap.to(arr[i][j], {y: freeY, duration: 0.3}).then(() => {
+            const from = arr[i][j].y;
+            const to = arr[i - 1][j].y;
+            let position = 0;
+            //
+            const animStep = () => {
+              position += 1 / 15;
+              arr[i][j].y = from - position;
+              if(arr[i][j].y < to) arr[i][j].y = to;
+              else setTimeout(() => animStep(), 20)
+            }
+            animStep()
+            setTimeout(() => {
               arr[i - 1][j].n = obj.n;
               arr[i][j].n = 'free';
-              arr[i][j].y = numberY;
-            })
+              arr[i][j].y = from;
+            }, 400)
             moves += 1;
             gamePlay();
             sound.play();
@@ -193,13 +235,22 @@ canvas.addEventListener('click', function(e) {
 
           // // MOVE DOWN
           if(arr[i + 1] && arr[i + 1][j] && arr[i + 1][j].n == 'free') {
-            const numberY = arr[i][j].y;
-            const freeY = arr[i + 1][j].y;
-            gsap.to(arr[i][j], {y: freeY, duration: 0.3}).then(() => {
+            const from = arr[i][j].y;
+            const to = arr[i + 1][j].y;
+            let position = 0;
+            //
+            const animStep = () => {
+              position += 1 / 15;
+              arr[i][j].y = from + position;
+              if(arr[i][j].y > to) arr[i][j].y = to;
+              else setTimeout(() => animStep(), 20)
+            }
+            animStep()
+            setTimeout(() => {
               arr[i + 1][j].n = obj.n;
               arr[i][j].n = 'free';
-              arr[i][j].y = numberY;
-            })
+              arr[i][j].y = from;
+            }, 400)
             moves += 1;
             isPlay = true;
             gamePlay();
@@ -208,28 +259,47 @@ canvas.addEventListener('click', function(e) {
 
           // MOVE LEFT
           if(arr[i][j - 1] && arr[i][j - 1].n == 'free') {
-            const numberX = arr[i][j].x;
-            const freeX = arr[i][j - 1].x;
-            gsap.to(arr[i][j], {x: freeX, duration: 0.3}).then(() => {
+            const from = arr[i][j].x;
+            const to = arr[i][j - 1].x;
+            let position = 0;
+            //
+            const animStep = () => {
+              position += 1 / 15;
+              arr[i][j].x = from - position;
+              if(arr[i][j].x < to) arr[i][j].x = to;
+              else setTimeout(() => animStep(), 20)
+            }
+            animStep();
+            setTimeout(() => {
               arr[i][j - 1].n = obj.n;
               arr[i][j].n = 'free';
-              arr[i][j].x = numberX;
-            })
+              arr[i][j].x = from;
+            }, 400)
             moves += 1;
             isPlay = true;
             gamePlay();
             sound.play();
           }
 
-          // // MOVE RIGHT
+          // MOVE RIGHT
           if(arr[i][j + 1] && arr[i][j + 1].n == 'free') {
-            const numberX = arr[i][j].x;
-            const freeX = arr[i][j + 1].x;
-            gsap.to(arr[i][j], {x: freeX, duration: 0.3}).then(() => {
+            const from = arr[i][j].x;
+            const to = arr[i][j + 1].x;
+            let position = 0;
+            //
+            const animStep = () => {
+              position += 1 / 15;
+              arr[i][j].x = from + position;
+              if(arr[i][j].x > to) arr[i][j].x = to;
+              else setTimeout(() => animStep(), 20)
+            }
+            animStep();
+
+            setTimeout(() => {
               arr[i][j + 1].n = obj.n;
               arr[i][j].n = 'free';
-              arr[i][j].x = numberX;
-            })
+              arr[i][j].x = from;
+            }, 400)
             moves += 1;
             isPlay = true;
             gamePlay();
@@ -239,7 +309,7 @@ canvas.addEventListener('click', function(e) {
       })
     })
   }
-  setTimeout(() => canClick = true, 300)
+  setTimeout(() => canClick = true, 400)
 })
 
 // HELPERS
@@ -259,13 +329,11 @@ function gameClear() {
   moves = 0;
   timer = 0;
   blockTimer.textContent = '00:00:00';
-  buttonPlay.classList.remove('active');
   buttonPause.classList.add('active');
 }
 
 function gamePlay() {
   isPlay = true;
-  buttonPlay.classList.add('active');
   buttonPause.classList.remove('active');
 }
 
@@ -287,21 +355,27 @@ function deepEqual (arr1, arr2) {
   return isEqueal
 }
 
-function showResult() {
 
-  const data = JSON.parse(localStorage.getItem('results')) || resultData;
-  console.log(data)
+function saveCurrentPosition() {
+  buttonSave.classList.add('active');
+  const data = {
+    'arr': arr,
+    'exp': exp,
+    'size': size,
+    'moves': moves,
+    'timer': timer
+  }
+  console.log('saveCurrentPosition', data)
+  localStorage.setItem('gameSave', JSON.stringify(data));
+}
 
-  //
-  document.querySelector('.modal-results').classList.add('active');
-  document.querySelector('.modal-result__table').innerHTML =
-    `
-    <li><span>Date</span><span>Time</span><span>Size</span><span>Moves</span><span>Timer</span></li>
-    ${data.map((row) => `<li><span>${row.date}</span><span>${row.time}</span><span>${row.size}</span><span>${row.moves}</span><span>${row.timer}</span></li>`).join('')}`
+function unsaveCurrentPosition() {
+  buttonSave.classList.remove('active');
+  localStorage.removeItem('gameSave');
 }
 
 function saveResult() {
-  let data = JSON.parse(localStorage.getItem('results')) || resultData;
+  let data = JSON.parse(localStorage.getItem('gameResults')) || resultData;
   if(moves > 0 && timer > 0) balls = (size * size) / (moves * timer);
   else balls = -1;
   const date = new Date();
@@ -323,7 +397,31 @@ function saveResult() {
   console.log(data)
   data = data.slice(0, 10);
   console.log(data)
-  localStorage.setItem('results', JSON.stringify(data))
+  localStorage.setItem('gameResults', JSON.stringify(data))
+}
+
+function showResult() {
+  const data = JSON.parse(localStorage.getItem('gameResults')) || resultData;
+  console.log(data)
+  document.querySelector('.modal-results').classList.add('active');
+  document.querySelector('.modal-result__table').innerHTML =
+    `
+    <li>
+      <span>Date</span>
+      <span>Time</span>
+      <span>Size</span>
+      <span>Moves</span>
+      <span>Timer</span>
+    </li>
+    ${data.map((row) => `
+      <li>
+        <span>${row.date}</span>
+        <span>${row.time}</span>
+        <span>${row.size}</span>
+        <span>${row.moves}</span>
+        <span>${row.timer}</span>
+      </li>
+    `).join('')}`
 }
 
 document.querySelector('.modal-info__button').addEventListener('click', () => {
@@ -334,12 +432,3 @@ document.querySelector('.modal-results__button').addEventListener('click', () =>
   document.querySelector('.modal-results').classList.remove('active');
 })
 
-
-
-
-
-
-// canvas.addEventListener('mousemove', function(e) {
-//   const {x, y} = getCursorPosition(canvas, e);
-//   console.log(x, y)
-// })

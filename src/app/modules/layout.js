@@ -10,8 +10,7 @@ export const createLayout = () => {
   <span id="gameTimer">00:00:00</span>
   </div>
   <div class="buttons-top">
-    <button id="gameShuffle">Shuffle</button>
-    <button id="gamePlay">Play</button>
+    <button id="gamePlay">Shuffle and play</button>
     <button id="gamePause" class="active">Pause</button>
     <button id="gameSave">Save</button>
     <button id="gameResults">Results</button>
@@ -32,8 +31,8 @@ export const createLayout = () => {
   const btnBottom = document.createElement('div');
   btnBottom.className = "buttons-bottom";
   btnBottom.innerHTML = `
-    <button class="active" id="gameSize3">3x3</button>
-    <button id="gameSize4">4x4</button>
+    <button id="gameSize3">3x3</button>
+    <button id="gameSize4" class="active">4x4</button>
     <button id="gameSize5">5x5</button>
     <button id="gameSize6">6x6</button>
     <button id="gameSize7">7x7</button>

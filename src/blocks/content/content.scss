@@ -13,7 +13,8 @@
   display: block;
   width: 31.25rem;
   height: 31.25rem;
-  border: 0.25rem solid $color-blue;
+  border: 2px solid $color-blue;
+  border-radius: 10px;
   box-sizing: content-box;
 }
 
@@ -32,7 +33,6 @@
   width: 31.25rem;
   padding: 0.25rem 0;
 
-
   button {
     display: flex;
     justify-content: center;
@@ -42,7 +42,7 @@
     height: 1.875rem;
     padding: 0;
     background-color: #fff;
-    border: 1px solid $color-blue;
+    border: 2px solid $color-blue;
     color: $color-blue;
     font-size: 0.9375rem;
     cursor: pointer;
@@ -57,7 +57,11 @@
 .buttons-top {
 
   button {
-    width: 16%;
+    width: 17%;
+
+    &:nth-child(1) {
+      width: 28.5%;
+    }
   }
 }
 
