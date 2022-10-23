@@ -1,24 +1,16 @@
 import '../styles/scss/main.scss';
 import component from './modules/component';
 import { createMatrix, createRandomSet, createSet } from './modules/createMatrix';
-import { coordinates } from './modules/coordinates';
+import { getComponentPosition, getCursorPosition, deepEqual } from './modules/coordinates';
 import { createLayout } from './modules/layout';
-import { audio } from './modules/audio';
-import { resultData } from './modules/data';
-
+import { showModalInfo, showModalResult, modalCloseButton } from './modules/modal';
+import { saveCurrentPosition, saveResult, unsaveCurrentPosition } from './modules/results';
+import { timerToHMS } from './modules/time';
+import { audio } from "./modules/audio";
 require('./modules/roundRect');
 
 createLayout();
-
-let arr = [];
-let exp = [];
-let size = 4;
-let moves = 0;
-let timer = 0;
-let isPlay = false;
-let canClick = true;
-let balls = -1;
-let saveStep = false;
+modalCloseButton();
 
 const blockTimer = document.getElementById('gameTimer');
 const canvas = document.getElementById('canvas');
@@ -35,28 +27,37 @@ const button8x8 = document.getElementById('gameSize8');
 const soundButton = document.getElementById('gameSound');
 const sound = audio();
 
+let arr = [];
+let exp = [];
+let size = 4;
+let moves = 0;
+let timer = 0;
+let isPlay = false;
+let canClick = true;
+let useSaver = false;
+let volume = 1;
+
 buttonPlay.addEventListener('click', () => {
   gameShuffle();
-  gamePlay()
+  gamePlay();
 })
 
 buttonPause.addEventListener('click', (e) => {
-  if(e.target.classList.contains('active')) gamePlay();
-  else gamePause();
+  e.target.classList.contains('active') ? gamePlay() : gamePause();
 })
 
 buttonSave.addEventListener('click', (e) => {
   if(e.target.classList.contains('active')) {
     unsaveCurrentPosition();
-    saveStep = false;
+    useSaver = false;
   }
   else {
-    saveCurrentPosition();
-    saveStep = true;
+    saveCurrentPosition(arr, exp, size, moves, timer, volume);
+    useSaver = true;
   }
 });
 
-buttonResults.addEventListener('click', () => showResult())
+buttonResults.addEventListener('click', () => showModalResult())
 
 button3x3.addEventListener('click', () => {
   size = 3;
@@ -117,10 +118,12 @@ soundButton.addEventListener('click', () => {
     soundButton.textContent = 'Sound Off';
     soundButton.classList.remove('active');
     sound.volume = 0;
+    volume = 0;
   } else {
     soundButton.textContent = 'Sound On';
     soundButton.classList.add('active');
     sound.volume = 1;
+    volume = 1;
   }
 })
 
@@ -132,18 +135,24 @@ if(savedData &&
   savedData.exp &&
   savedData.size &&
   savedData.moves >= 0 &&
-  savedData.timer >= 0
+  savedData.timer >= 0 &&
+  savedData.volume >= 0
 ) {
   arr = savedData.arr;
   exp = savedData.exp;
   size = savedData.size;
   moves = savedData.moves;
   timer = savedData.timer;
+  volume = savedData.volume;
   blockTimer.textContent = timerToHMS(timer);
   buttonSave.classList.add('active');
   document.querySelector('.buttons-bottom .active').classList.remove('active');
   document.getElementById(`gameSize${size}`).classList.add('active');
-  saveStep = true;
+  useSaver = true;
+  if(volume == 0) {
+    soundButton.textContent = 'Sound Off';
+    soundButton.classList.remove('active');
+  }
   console.log('GET SAVED SET');
   // console.log(arr);
   // console.log(exp);
@@ -157,29 +166,28 @@ if(savedData &&
 
 const ctx = canvas.getContext('2d');
 
-function update() {
-  ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+function gameFrame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   arr.map((a, i) => {
     a.map((obj, j) => {
       if(obj.n !== 'free') {
-        if(arr[i][j].n == exp[i][j].n) component(ctx, size, obj, true);
-        else component(ctx, size, obj);
+        arr[i][j].n == exp[i][j].n ? component(ctx, size, obj, true) : component(ctx, size, obj);
       }
     })
   })
   if(isPlay && deepEqual(arr, exp)) {
     gamePause ();
-    saveResult();
-    showInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`)
+    saveResult(moves, timer, size)
+    showModalInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`)
     gameShuffle();
   }
-  if(saveStep) {
-    saveCurrentPosition();
+  if(useSaver) {
+    saveCurrentPosition(arr, exp, size, moves, timer, volume);
   }
   document.getElementById('gameScore').textContent = moves;
 }
 
-setInterval(update, 20);
+setInterval(() => window.requestAnimationFrame(() => gameFrame()), 20);
 
 setInterval(() => {
   if(isPlay) {
@@ -188,22 +196,14 @@ setInterval(() => {
   }
 }, 1000)
 
-function getCursorPosition(canvas, event) {
-  const rect = canvas.getBoundingClientRect();
-  const fix = 500 / document.getElementById("canvas").offsetWidth;
-  const mouseX = (event.clientX - rect.left) * fix;
-  const mouseY = (event.clientY - rect.top) * fix;
-  return { mouseX, mouseY}
-}
-
 canvas.addEventListener('click', function(e) {
   if(canClick) {
     canClick = false;
     const {mouseX, mouseY} = getCursorPosition(canvas, e);
-    console.log(mouseX, mouseY);
+    // console.log(mouseX, mouseY);
     arr.forEach((a, i) => {
       a.forEach((obj, j) => {
-        const { xStart, yStart, xEnd, yEnd} = coordinates(size, j, i);
+        const { xStart, yStart, xEnd, yEnd} = getComponentPosition(size, j, i);
         if(mouseX > xStart && mouseX < xEnd && mouseY > yStart && mouseY < yEnd) {
 
           // MOVE UP
@@ -213,20 +213,20 @@ canvas.addEventListener('click', function(e) {
             let position = 0;
             //
             const animStep = () => {
-              position += 1 / 15;
+              position += 1 / 5;
               arr[i][j].y = from - position;
               if(arr[i][j].y < to) arr[i][j].y = to;
-              else setTimeout(() => animStep(), 20)
+              else setTimeout(() => animStep(), 18)
             }
             animStep()
             setTimeout(() => {
               arr[i - 1][j].n = obj.n;
               arr[i][j].n = 'free';
               arr[i][j].y = from;
-            }, 400)
+            }, 200)
             moves += 1;
             gamePlay();
-            sound.play();
+            if(volume) sound.play();
           }
 
           // // MOVE DOWN
@@ -236,21 +236,21 @@ canvas.addEventListener('click', function(e) {
             let position = 0;
             //
             const animStep = () => {
-              position += 1 / 15;
+              position += 1 / 5;
               arr[i][j].y = from + position;
               if(arr[i][j].y > to) arr[i][j].y = to;
-              else setTimeout(() => animStep(), 20)
+              else setTimeout(() => animStep(), 18)
             }
             animStep()
             setTimeout(() => {
               arr[i + 1][j].n = obj.n;
               arr[i][j].n = 'free';
               arr[i][j].y = from;
-            }, 400)
+            }, 200)
             moves += 1;
             isPlay = true;
             gamePlay();
-            sound.play();
+            if(volume) sound.play();
           }
 
           // MOVE LEFT
@@ -260,21 +260,21 @@ canvas.addEventListener('click', function(e) {
             let position = 0;
             //
             const animStep = () => {
-              position += 1 / 15;
+              position += 1 / 5;
               arr[i][j].x = from - position;
               if(arr[i][j].x < to) arr[i][j].x = to;
-              else setTimeout(() => animStep(), 20)
+              else setTimeout(() => animStep(), 18)
             }
             animStep();
             setTimeout(() => {
               arr[i][j - 1].n = obj.n;
               arr[i][j].n = 'free';
               arr[i][j].x = from;
-            }, 400)
+            }, 200)
             moves += 1;
             isPlay = true;
             gamePlay();
-            sound.play();
+            if(volume) sound.play();
           }
 
           // MOVE RIGHT
@@ -284,10 +284,10 @@ canvas.addEventListener('click', function(e) {
             let position = 0;
             //
             const animStep = () => {
-              position += 1 / 15;
+              position += 1 / 5;
               arr[i][j].x = from + position;
               if(arr[i][j].x > to) arr[i][j].x = to;
-              else setTimeout(() => animStep(), 20)
+              else setTimeout(() => animStep(), 18)
             }
             animStep();
 
@@ -295,25 +295,20 @@ canvas.addEventListener('click', function(e) {
               arr[i][j + 1].n = obj.n;
               arr[i][j].n = 'free';
               arr[i][j].x = from;
-            }, 400)
+            }, 200)
             moves += 1;
             isPlay = true;
             gamePlay();
-            sound.play();
+            if(volume) sound.play();
           }
         }
       })
     })
   }
-  setTimeout(() => canClick = true, 400)
+  setTimeout(() => canClick = true, 250)
 })
 
 // HELPERS
-function showInfo(message) {
-  document.querySelector('.modal-info__title').textContent = message;
-  document.querySelector('.modal-info').classList.add('active');
-}
-
 function gameShuffle() {
   arr = createMatrix(size, createRandomSet);
   exp = createMatrix(size, createSet);
@@ -338,103 +333,3 @@ function gamePause() {
   buttonPlay.classList.remove('active');
   buttonPause.classList.add('active');
 }
-
-function deepEqual (arr1, arr2) {
-  let isEqueal = true;
-  arr1.forEach((arr, i) => {
-    arr.forEach((obj, j) => {
-      if(obj.n !== arr2[i][j].n) isEqueal = false;
-      if(obj.x !== arr2[i][j].x) isEqueal = false;
-      if(obj.y !== arr2[i][j].y) isEqueal = false;
-    })
-  })
-  return isEqueal
-}
-
-
-function saveCurrentPosition() {
-  buttonSave.classList.add('active');
-  const data = {
-    'arr': arr,
-    'exp': exp,
-    'size': size,
-    'moves': moves,
-    'timer': timer
-  }
-  // console.log('saveCurrentPosition', data)
-  localStorage.setItem('gameSave', JSON.stringify(data));
-}
-
-function unsaveCurrentPosition() {
-  buttonSave.classList.remove('active');
-  localStorage.removeItem('gameSave');
-}
-
-function saveResult() {
-  let data = JSON.parse(localStorage.getItem('gameResults')) || resultData;
-  if(moves > 0 && timer > 0) balls = (size * size) / (moves * timer);
-  else balls = -1;
-  const date = new Date();
-  const yy = date.getFullYear();
-  const mm = `${date.getMonth() + 1}`.padStart(2, '0');
-  const dd = `${date.getDate()}`.padStart(2, '0');
-  const h = `${date.getHours()}`.padStart(2, '0');
-  const m = `${date.getMinutes()}`.padStart(2, '0');
-  const s = `${date.getSeconds()}`.padStart(2, '0');
-  data.push({
-    date: dd + '.' + mm + '.' + yy,
-    time: h + ':' + m + ':' + s,
-    size: size + 'x' + size,
-    moves: moves,
-    timer: timer,
-    balls: balls
-  },)
-  data.sort((a, b) =>  b.balls - a.balls)
-  console.log(data)
-  data = data.slice(0, 10);
-  console.log(data)
-  localStorage.setItem('gameResults', JSON.stringify(data))
-}
-
-function showResult() {
-  const data = JSON.parse(localStorage.getItem('gameResults')) || resultData;
-  console.log(data)
-  document.querySelector('.modal-results').classList.add('active');
-  document.querySelector('.modal-result__table').innerHTML =
-    `
-    <li>
-      <span>Date</span>
-      <span>Time</span>
-      <span>Size</span>
-      <span>Moves</span>
-      <span>Timer</span>
-    </li>
-    ${data.map((row) => {
-      if(typeof(row.timer) == 'number') row.timer = timerToHMS(row.timer)
-      return `
-        <li>
-          <span>${row.date}</span>
-          <span>${row.time}</span>
-          <span>${row.size}</span>
-          <span>${row.moves}</span>
-          <span>${row.timer}</span>
-        </li>
-      `
-    }).join('')}`
-}
-
-function timerToHMS(timer) {
-  const h = `${Math.floor(timer / 3600)}`.padStart(2, '0');
-  const m = `${Math.floor((timer % 3600) / 60)}`.padStart(2, '0');
-  const s = `${Math.floor((timer % 3600) % 60)}`.padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
-
-document.querySelector('.modal-info__button').addEventListener('click', () => {
-  document.querySelector('.modal-info').classList.remove('active');
-})
-
-document.querySelector('.modal-results__button').addEventListener('click', () => {
-  document.querySelector('.modal-results').classList.remove('active');
-})
-

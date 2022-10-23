@@ -1,7 +1,7 @@
-import { coordinates } from './coordinates';
+import { getComponentPosition } from './coordinates';
 
 function component(ctx, size, obj, isGreen) {
-  const { width, xStart, yStart, xText, yText} = coordinates(size, obj.x, obj.y);
+  const { width, xStart, yStart, xText, yText} = getComponentPosition(size, obj.x, obj.y);
   ctx.lineWidth = 2;
   ctx.strokeStyle = "#df4f29";
   if(isGreen) ctx.strokeStyle = "#388f2c";
