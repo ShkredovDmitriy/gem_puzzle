@@ -1,5 +1,10 @@
 export const createLayout = () => {
 
+  // HEADER
+  const header = document.createElement('header');
+  header.className = 'header',
+  document.getElementById('mainBody').append(header);
+
   // BUTTONS TOP
   const btnTop = document.createElement('div');
   btnTop.innerHTML = `
@@ -17,7 +22,7 @@ export const createLayout = () => {
     <button id="gameSound" class="active">Sound On</button>
   </div>
   `
-  document.querySelector('.content').append(btnTop);
+  document.getElementById('mainBody').append(btnTop);
 
   // CANVAS
   const canvas = document.createElement('canvas');
@@ -25,7 +30,7 @@ export const createLayout = () => {
   canvas.width = '500';
   canvas.height = '500';
   canvas.className = 'game-canvas';
-  document.querySelector('.content').append(canvas);
+  document.getElementById('mainBody').append(canvas);
 
   // BUTTONS BOTTOM
   const btnBottom = document.createElement('div');
@@ -38,7 +43,7 @@ export const createLayout = () => {
     <button id="gameSize7">7x7</button>
     <button id="gameSize8">8x8</button>
   `
-  document.querySelector('.content').append(btnBottom);
+  document.getElementById('mainBody').append(btnBottom);
 
   // ADD MODAL INFO
   const modalInfo = document.createElement('div');
@@ -47,7 +52,7 @@ export const createLayout = () => {
     <div class="modal__title modal-info__title"></div>
     <button class="modal__button modal-info__button">Close</button>
   `
-  document.querySelector('.content').append(modalInfo);
+  document.getElementById('mainBody').append(modalInfo);
 
   // ADD MODAL RESULT
   const modalResult = document.createElement('div');
@@ -57,5 +62,11 @@ export const createLayout = () => {
     <ul class="modal__table modal-result__table"></ul>
     <button class="modal__button modal-results__button">Close</button>
   `
-  document.querySelector('.content').append(modalResult);
+  document.getElementById('mainBody').append(modalResult);
+
+
+  // FOOTER
+  const footer = document.createElement('footer');
+  footer.className = 'footer',
+  document.getElementById('mainBody').append(footer);
 }
