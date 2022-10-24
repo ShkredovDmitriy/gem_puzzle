@@ -16,6 +16,10 @@ body {
   border: 2px solid $color-blue;
   border-radius: 10px;
   box-sizing: content-box;
+
+  &.hovered {
+    cursor: pointer;
+  }
 }
 
 .score-top {
