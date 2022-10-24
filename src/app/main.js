@@ -222,9 +222,10 @@ const onMouseMove = (e) => {
           const diff = drugYstart - mouseY;
           if( diff > 5) {
             let position = diff / width;
-            if(position >= 1 ) position = 1;
+            if(position > 0.94 ) position = 1;
+            if(position < 0.06 ) position = 0;
             arr[i][j].y = i - position;
-            console.log('MOUSEMOVE UP', arr[i][j].y - arr[i - 1][j].y);
+            console.log('MOUSEMOVE UP', arr[i][j].y - (i - 1));
           }
         }
       }
@@ -235,9 +236,10 @@ const onMouseMove = (e) => {
           const diff = mouseY - drugYstart;
           if( diff > 5) {
             let position = diff / width;
-            if(position >= 1 ) position = 1;
+            if(position > 0.94 ) position = 1;
+            if(position < 0.06 ) position = 0;
             arr[i][j].y = i + position;
-            console.log('MOUSEMOVE DOWN', arr[i + 1][j].y - arr[i][j].y);
+            console.log('MOUSEMOVE DOWN', (i + 1) - arr[i][j].y);
           }
         }
       }
@@ -248,9 +250,10 @@ const onMouseMove = (e) => {
           const diff = drugXstart - mouseX;
           if( diff > 5) {
             let position = diff / width;
-            if(position >= 1 ) position = 1;
+            if(position > 0.94 ) position = 1;
+            if(position < 0.06 ) position = 0;
             arr[i][j].x = j - position;
-            console.log('MOUSEMOVE LEFT', arr[i][j].x - arr[i][j - 1].x);
+            console.log('MOUSEMOVE LEFT', arr[i][j].x - (j - 1));
           }
         }
       }
@@ -261,9 +264,10 @@ const onMouseMove = (e) => {
           const diff = mouseX - drugXstart;
           if( diff > 5) {
             let position = diff / width;
-            if(position >= 1 ) position = 1;
+            if(position > 0.94 ) position = 1;
+            if(position < 0.06 ) position = 0;
             arr[i][j].x = j + position;
-            console.log('MOUSEMOVE RIGHT', arr[i][j + 1].x - arr[i][j].x);
+            console.log('MOUSEMOVE RIGHT', (j + 1) - arr[i][j].x);
           }
         }
       }
@@ -308,7 +312,6 @@ canvas.addEventListener('mousedown', function(e) {
 })
 
 canvas.addEventListener('mouseup', function(e) {
-
   canvas.classList.remove('hovered');
   document.removeEventListener('mousemove', onMouseMove);
   const {mouseX, mouseY} = getCursorPosition(canvas, e);
@@ -325,13 +328,12 @@ canvas.addEventListener('mouseup', function(e) {
           // MOVE UP
           if(arr[i - 1] && arr[i - 1][j] && arr[i - 1][j].n == 'free') {
             let position = 0;
-            const animStep = () => {
+            const anim = () => {
               position += 1 / 5;
               arr[i][j].y = i - position;
-              if(arr[i][j].y < (i - 1)) arr[i][j].y = i - 1;
-              else setTimeout(() => animStep(), 18)
+              arr[i][j].y < (i - 1) ? arr[i][j].y = i - 1 : setTimeout(() => anim(), 18);
             }
-            animStep()
+            anim()
             setTimeout(() => {
               arr[i - 1][j].n = obj.n;
               arr[i][j].n = 'free';
@@ -343,16 +345,13 @@ canvas.addEventListener('mouseup', function(e) {
 
           // MOVE DOWN
           if(arr[i + 1] && arr[i + 1][j] && arr[i + 1][j].n == 'free') {
-            // const to = arr[i + 1][j].y;
             let position = 0;
-            //
-            const animStep = () => {
+            const anim = () => {
               position += 1 / 5;
               arr[i][j].y = i + position;
-              if(arr[i][j].y > (i + 1)) arr[i][j].y = i + 1;
-              else setTimeout(() => animStep(), 18)
+              arr[i][j].y > (i + 1) ? arr[i][j].y = i + 1 : setTimeout(() => anim(), 18);
             }
-            animStep()
+            anim()
             setTimeout(() => {
               arr[i + 1][j].n = obj.n;
               arr[i][j].n = 'free';
@@ -364,15 +363,13 @@ canvas.addEventListener('mouseup', function(e) {
 
           // MOVE LEFT
           if(arr[i][j - 1] && arr[i][j - 1].n == 'free') {
-            // const to = arr[i][j - 1].x;
             let position = 0;
-            const animStep = () => {
+            const anim = () => {
               position += 1 / 5;
               arr[i][j].x = j - position;
-              if(arr[i][j].x < (j - 1)) arr[i][j].x = (j - 1);
-              else setTimeout(() => animStep(), 18)
+              arr[i][j].x < (j - 1) ? arr[i][j].x = (j - 1) : setTimeout(() => anim(), 18);
             }
-            animStep();
+            anim();
             setTimeout(() => {
               arr[i][j - 1].n = obj.n;
               arr[i][j].n = 'free';
@@ -384,15 +381,13 @@ canvas.addEventListener('mouseup', function(e) {
 
           // MOVE RIGHT
           if(arr[i][j + 1] && arr[i][j + 1].n == 'free') {
-            // const to = arr[i][j + 1].x;
             let position = 0;
-            const animStep = () => {
+            const anim = () => {
               position += 1 / 5;
               arr[i][j].x = j + position;
-              if(arr[i][j].x > (j + 1)) arr[i][j].x = j + 1;
-              else setTimeout(() => animStep(), 18)
+              arr[i][j].x > (j + 1) ? arr[i][j].x = j + 1 : setTimeout(() => anim(), 18);
             }
-            animStep();
+            anim();
             setTimeout(() => {
               arr[i][j + 1].n = obj.n;
               arr[i][j].n = 'free';
@@ -415,33 +410,33 @@ canvas.addEventListener('mouseup', function(e) {
         // MOVE UP
         if(arr[i - 1] && arr[i - 1][j] && arr[i - 1][j].n == 'free' && mouseMoveUp) {
           if(mouseX > xStart && mouseX < xEnd && mouseY > yStart - width && mouseY < yEnd) {
-            if(arr[i][j].y - arr[i - 1][j].y < 0.5) {
+            if(arr[i][j].y - (i - 1) < 0.7) {
               arr[i - 1][j].n = obj.n;
               arr[i][j].n = 'free';
               gameStepCount();
             }
             arr[i][j].y = i;
-            console.log('MOUSEUP MOVE UP')
+            console.log('MOUSEUP MOVE UP');
           }
         }
 
         // MOVE DOWN
         if(arr[i + 1] && arr[i + 1][j] && arr[i + 1][j].n == 'free' && mouseMoveDown) {
           if(mouseX > xStart && mouseX < xEnd && mouseY > yStart  && mouseY < yEnd + width) {
-            if(arr[i + 1][j].y - arr[i][j].y < 0.5 ) {
+            if((i + 1) - arr[i][j].y < 0.7 ) {
               arr[i + 1][j].n = obj.n;
               arr[i][j].n = 'free';
               gameStepCount();
             }
             arr[i][j].y = i;
-            console.log('MOUSEUP MOVE DOWN')
+            console.log('MOUSEUP MOVE DOWN');
           }
         }
 
         // MOVE LEFT
         if(arr[i][j - 1] && arr[i][j - 1].n == 'free' && mouseMoveLeft) {
           if(mouseX > xStart - width && mouseX < xEnd && mouseY > yStart  && mouseY < yEnd) {
-            if(arr[i][j].x - arr[i][j - 1].x < 0.5) {
+            if(arr[i][j].x - (j - 1) < 0.7) {
               arr[i][j - 1].n = obj.n;
               arr[i][j].n = 'free';
               gameStepCount();
@@ -454,7 +449,7 @@ canvas.addEventListener('mouseup', function(e) {
         // MOVE RIGHT
         if(arr[i][j + 1] && arr[i][j + 1].n == 'free' && mouseMoveRight) {
           if(mouseX > xStart && mouseX < xEnd + width && mouseY > yStart  && mouseY < yEnd) {
-            if(arr[i][j + 1].x - arr[i][j].x < 0.5) {
+            if((j + 1) - arr[i][j].x < 0.7) {
               arr[i][j + 1].n = obj.n;
               arr[i][j].n = 'free';
               gameStepCount();
