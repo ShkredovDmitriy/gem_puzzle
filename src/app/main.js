@@ -135,7 +135,7 @@ soundButton.addEventListener('click', () => {
 })
 
 const savedData = JSON.parse(localStorage.getItem('gameSave'));
-console.log('savedData', savedData);
+// console.log('savedData', savedData);
 
 if(savedData &&
   savedData.arr &&
@@ -160,11 +160,11 @@ if(savedData &&
     soundButton.textContent = 'Sound Off';
     soundButton.classList.remove('active');
   }
-  console.log('GET SAVED SET');
+  // console.log('GET SAVED SET');
 } else {
   arr = createMatrix(size, createRandomSet);
   exp = createMatrix(size, createSet);
-  console.log('CREATE NEW SET');
+  // console.log('CREATE NEW SET');
 }
 
 const ctx = canvas.getContext('2d');
@@ -208,67 +208,78 @@ const onMouseMove = (e) => {
     a.forEach((obj, j) => {
       const { width, xStart, yStart, xEnd, yEnd} = getComponentPosition(size, j, i);
 
-      //
       if(!mouseMoveUp && !mouseMoveDown && !mouseMoveLeft && !mouseMoveRight) {
-        if(drugYstart - mouseY > 5) mouseMoveUp = true;
-        else if(mouseY - drugYstart > 5) mouseMoveDown = true;
-        else if(drugXstart - mouseX > 5) mouseMoveLeft = true;
-        else if(mouseX - drugXstart > 5) mouseMoveRight = true;
+        if(drugYstart - mouseY > 3) mouseMoveUp = true;
+        else if(mouseY - drugYstart > 3) mouseMoveDown = true;
+        else if(drugXstart - mouseX > 3) mouseMoveLeft = true;
+        else if(mouseX - drugXstart > 3) mouseMoveRight = true;
       }
 
       // MOVE UP
       if(arr[i - 1] && arr[i - 1][j] && arr[i - 1][j].n == 'free' && mouseMoveUp) {
         if(mouseX > xStart && mouseX < xEnd && mouseY > yStart - width && mouseY < yEnd) {
           const diff = drugYstart - mouseY;
-          if( diff > 5) {
-            let position = diff / width;
-            if(position > 0.94 ) position = 1;
-            if(position < 0.06 ) position = 0;
-            arr[i][j].y = i - position;
-            console.log('MOUSEMOVE UP', arr[i][j].y - (i - 1));
-          }
+          let position = diff / width;
+          if(position < 0 ) position = 0;
+          if(position > 1 ) position = 1;
+          arr[i][j].y = i - position;
+          canvas.classList.add('hovered');
+          // console.log('MOUSEMOVE UP', arr);
+        } if(mouseX < xStart || mouseX > xEnd || mouseY < yStart - width || mouseY > yEnd) {
+          arr[i][j].y = i;
+          mouseMoveRemove();
+          // console.log('MOUSEMOVE UP ESCAPE');
         }
       }
 
       // MOVE DOWN
       if(arr[i + 1] && arr[i + 1][j] && arr[i + 1][j].n == 'free' && mouseMoveDown) {
-        if(mouseX > xStart && mouseX < xEnd && mouseY > yStart  && mouseY < yEnd + width) {
+        if(mouseX > xStart && mouseX < xEnd && mouseY > yStart && mouseY < yEnd + width) {
           const diff = mouseY - drugYstart;
-          if( diff > 5) {
-            let position = diff / width;
-            if(position > 0.94 ) position = 1;
-            if(position < 0.06 ) position = 0;
-            arr[i][j].y = i + position;
-            console.log('MOUSEMOVE DOWN', (i + 1) - arr[i][j].y);
-          }
+          let position = diff / width;
+          if(position > 1 ) position = 1;
+          if(position < 0 ) position = 0;
+          arr[i][j].y = i + position;
+          canvas.classList.add('hovered');
+          // console.log('MOUSEMOVE DOWN', (i + 1) - arr[i][j].y);
+        } if(mouseX < xStart || mouseX > xEnd || mouseY < yStart || mouseY > yEnd + width) {
+          arr[i][j].y = i;
+          mouseMoveRemove();
+          // console.log('MOUSEMOVE DOWN ESCAPE');
         }
       }
 
       // MOVE LEFT
       if(arr[i][j - 1] && arr[i][j - 1].n == 'free' && mouseMoveLeft) {
-        if(mouseX > xStart - width && mouseX < xEnd && mouseY > yStart  && mouseY < yEnd) {
+        if(mouseX > xStart - width && mouseX < xEnd && mouseY > yStart && mouseY < yEnd) {
           const diff = drugXstart - mouseX;
-          if( diff > 5) {
-            let position = diff / width;
-            if(position > 0.94 ) position = 1;
-            if(position < 0.06 ) position = 0;
-            arr[i][j].x = j - position;
-            console.log('MOUSEMOVE LEFT', arr[i][j].x - (j - 1));
-          }
+          let position = diff / width;
+          if(position > 1 ) position = 1;
+          if(position < 0 ) position = 0;
+          arr[i][j].x = j - position;
+          canvas.classList.add('hovered');
+          // console.log('MOUSEMOVE LEFT', arr[i][j].x - (j - 1));
+        } if(mouseX < xStart - width || mouseX > xEnd || mouseY < yStart || mouseY > yEnd) {
+          arr[i][j].x = j;
+          mouseMoveRemove();
+          // console.log('MOUSEMOVE LEFT ESCAPE');
         }
       }
 
       // MOVE RIGHT
       if(arr[i][j + 1] && arr[i][j + 1].n == 'free' && mouseMoveRight) {
-        if(mouseX > xStart && mouseX < xEnd + width && mouseY > yStart  && mouseY < yEnd) {
+        if(mouseX > xStart && mouseX < xEnd + width && mouseY > yStart && mouseY < yEnd) {
           const diff = mouseX - drugXstart;
-          if( diff > 5) {
-            let position = diff / width;
-            if(position > 0.94 ) position = 1;
-            if(position < 0.06 ) position = 0;
-            arr[i][j].x = j + position;
-            console.log('MOUSEMOVE RIGHT', (j + 1) - arr[i][j].x);
-          }
+          let position = diff / width;
+          if(position > 0.94 ) position = 1;
+          if(position < 0.06 ) position = 0;
+          arr[i][j].x = j + position;
+          canvas.classList.add('hovered');
+          // console.log('MOUSEMOVE RIGHT', (j + 1) - arr[i][j].x);
+        } if(mouseX < xStart || mouseX > xEnd + width || mouseY < yStart || mouseY > yEnd) {
+          arr[i][j].x = j;
+          mouseMoveRemove();
+          // console.log('MOUSEMOVE RIGHT ESCAPE');
         }
       }
 
@@ -277,7 +288,6 @@ const onMouseMove = (e) => {
 }
 
 canvas.addEventListener('mousedown', function(e) {
-  canvas.classList.add('hovered');
   const {mouseX, mouseY} = getCursorPosition(canvas, e);
   drugXstart = mouseX;
   drugYstart = mouseY;
@@ -340,7 +350,7 @@ canvas.addEventListener('mouseup', function(e) {
               arr[i][j].y = i;
             }, 200)
             gameStepCount();
-            console.log('CLICK MOVE UP');
+            // console.log('CLICK MOVE UP');
           }
 
           // MOVE DOWN
@@ -358,7 +368,7 @@ canvas.addEventListener('mouseup', function(e) {
               arr[i][j].y = i;
             }, 200)
             gameStepCount();
-            console.log('CLICK MOVE DOWN');
+            // console.log('CLICK MOVE DOWN');
           }
 
           // MOVE LEFT
@@ -376,7 +386,7 @@ canvas.addEventListener('mouseup', function(e) {
               arr[i][j].x = j;
             }, 200)
             gameStepCount();
-            console.log('CLICK MOVE LEFT');
+            // console.log('CLICK MOVE LEFT');
           }
 
           // MOVE RIGHT
@@ -394,7 +404,7 @@ canvas.addEventListener('mouseup', function(e) {
               arr[i][j].x = j;
             }, 200)
             gameStepCount();
-            console.log('CLICK MOVE RIGHT');
+            // console.log('CLICK MOVE RIGHT');
           }
         }
       })
@@ -416,7 +426,10 @@ canvas.addEventListener('mouseup', function(e) {
               gameStepCount();
             }
             arr[i][j].y = i;
-            console.log('MOUSEUP MOVE UP');
+            // console.log('MOUSEUP MOVE UP');
+          } else if (mouseMoveUp) {
+            arr[i][j].y = i;
+            // console.log('MOUSEUP MOVE UP ESCAPE');
           }
         }
 
@@ -429,7 +442,10 @@ canvas.addEventListener('mouseup', function(e) {
               gameStepCount();
             }
             arr[i][j].y = i;
-            console.log('MOUSEUP MOVE DOWN');
+            // console.log('MOUSEUP MOVE DOWN');
+          } else if (mouseMoveDown) {
+            arr[i][j].y = i;
+            // console.log('MOUSEUP MOVE DOWN ESCAPE');
           }
         }
 
@@ -442,7 +458,10 @@ canvas.addEventListener('mouseup', function(e) {
               gameStepCount();
             }
             arr[i][j].x = j;
-            console.log('MOUSEUP MOVE LEFT', arr[i][j].x);
+            // console.log('MOUSEUP MOVE LEFT', arr[i][j].x);
+          } else if (mouseMoveDown) {
+            arr[i][j].x = j;
+            // console.log('MOUSEUP MOVE LEFT ESCAPE');
           }
         }
 
@@ -455,7 +474,10 @@ canvas.addEventListener('mouseup', function(e) {
               gameStepCount();
             }
             arr[i][j].x = j;
-            console.log('MOUSEUP MOVE RIGHT', arr[i][j].x);
+            // console.log('MOUSEUP MOVE RIGHT', arr[i][j].x);
+          } else if (mouseMoveRight) {
+            arr[i][j].x = j;
+            // console.log('MOUSEUP MOVE RIGHT ESCAPE');
           }
         }
 
@@ -499,4 +521,9 @@ function gameStepCount() {
   moves += 1;
   gamePlay();
   if(volume) sound.play();
+}
+
+function mouseMoveRemove() {
+  canvas.classList.remove('hovered');
+  document.removeEventListener('mousemove', onMouseMove);
 }
