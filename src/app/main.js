@@ -204,6 +204,12 @@ function gameFrame() {
       }
     })
   })
+  if(isPlay && deepEqual(arr, exp)) {
+    gamePause ();
+    saveResult(moves, timer, size)
+    showModalInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`);
+    gameShuffle();
+  }
   if(useSaver) {
     saveCurrentPosition(arr, exp, size, moves, timer, volume);
   }
@@ -512,13 +518,6 @@ canvas.addEventListener('mouseup', function(e) {
     mouseMoveDown = false;
     mouseMoveLeft = false;
     mouseMoveRight = false;
-    //
-    if(isPlay && deepEqual(arr, exp)) {
-      gamePause ();
-      saveResult(moves, timer, size)
-      showModalInfo(`Hooray! You solved the puzzle in ${blockTimer.textContent} and ${moves} moves!`)
-      // gameShuffle();
-    }
   }
 })
 
